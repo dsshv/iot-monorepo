@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  nats:
+    image: nats:2.9
+    ports:
+      - "4222:4222"
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:5
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=iot
+
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB_NAME=iot
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:4000
+    env_file:
+      - ./backend/auth-service/env.example
+
+  device-service:
+    build: ./backend/device-service
+    ports:
+      - "3002:3002"
+    depends_on:
+      - mongo
+      - nats
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB_NAME=iot
+      - NATS_URL=nats://nats:4222
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:4000
+    env_file:
+      - ./backend/device-service/env.example
+
+  telemetry-service:
+    build: ./backend/telemetry-service
+    ports:
+      - "3003:3003"
+    depends_on:
+      - mongo
+      - nats
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB_NAME=iot
+      - NATS_URL=nats://nats:4222
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:4000
+      - MAX_TELEMETRY_RECORDS_PER_DEVICE=100
+    env_file:
+      - ./backend/telemetry-service/env.example
+
+  api-gateway:
+    build: ./backend/api-gateway
+    ports:
+      - "4000:3000"
+    depends_on:
+      - nats
+      - device-service
+      - telemetry-service
+      - auth-service
+    environment:
+      - NATS_URL=nats://nats:4222
+      - DEVICE_SERVICE_URL=http://device-service:3002
+      - TELEMETRY_SERVICE_URL=http://telemetry-service:3003
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:8080
+    env_file:
+      - ./backend/api-gateway/env.example
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:8080"
+    depends_on:
+      - api-gateway
+    environment:
+      - REACT_APP_API_URL=http://localhost:4000/graphql
+      - REACT_APP_WS_URL=ws://localhost:4000/graphql
+
+volumes:
+  mongo_data:
