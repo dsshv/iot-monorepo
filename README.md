@@ -12,6 +12,7 @@
 - **auth-service** (порт 3001) - Сервис аутентификации
 - **device-service** (порт 3002) - Управление устройствами
 - **telemetry-service** (порт 3003) - Обработка телеметрии
+- **event-service** (порт 3004) - Централизованная обработка событий
 
 ### Frontend
 
@@ -24,38 +25,46 @@
 
 ## Новые улучшения
 
-### 1. Оптимизация NATS
+### 1. Event Service
+
+- ✅ Централизованная обработка событий через NATS
+- ✅ Подписка на каналы: device.created, device.updated, telemetry.received
+- ✅ Логирование событий в консоль
+- ✅ Сохранение событий в MongoDB через MikroORM
+- ✅ Расширяемая архитектура для бизнес-логики событий
+
+### 2. Оптимизация NATS
 
 - ✅ Singleton pattern для подключения к NATS
 - ✅ Автоматическое переподключение и graceful shutdown
 - ✅ Единый экземпляр подключения во всех сервисах
 
-### 2. Поддержка .env файлов
+### 3. Поддержка .env файлов
 
 - ✅ Конфигурация через переменные окружения
 - ✅ Отдельные .env файлы для каждого сервиса
 - ✅ Передача переменных через Docker Compose
 
-### 3. Расширенные API эндпойнты
+### 4. Расширенные API эндпойнты
 
 - ✅ PUT /devices/:id - обновление статуса устройства
 - ✅ GET /telemetry/device/:deviceId - получение телеметрии устройства
 - ✅ Настраиваемое количество записей телеметрии
 
-### 4. Модульный API Gateway
+### 5. Модульный API Gateway
 
 - ✅ Полноценная модульная архитектура NestJS
 - ✅ JWT аутентификация для всех GraphQL запросов и подписок
 - ✅ Фильтрация подписок по deviceId
 - ✅ Автоматическая генерация GraphQL схем
 
-### 5. Безопасность
+### 6. Безопасность
 
 - ✅ JWT guard для защиты всех эндпойнтов
 - ✅ Декоратор для получения текущего пользователя
 - ✅ Валидация токенов в заголовке Authorization
 
-### 6. Тестирование
+### 7. Тестирование
 
 - ✅ Jest тесты для всех микросервисов
 - ✅ Unit тесты для контроллеров, сервисов и резолверов
@@ -88,6 +97,7 @@ docker-compose up --build
 cd backend/api-gateway && npm run build && npm start
 cd backend/device-service && npm run build && npm start
 cd backend/telemetry-service && npm run build && npm start
+cd backend/event-service && npm run build && npm start
 cd frontend && npm run dev
 ```
 
@@ -103,6 +113,7 @@ cd backend && ./run-tests.sh
 cd backend && ./run-tests.sh auth-service
 cd backend && ./run-tests.sh device-service
 cd backend && ./run-tests.sh telemetry-service
+cd backend && ./run-tests.sh event-service
 cd backend && ./run-tests.sh api-gateway
 
 # Запуск тестов с покрытием
@@ -147,6 +158,12 @@ cd backend && ./run-tests.sh help
 - `POST /telemetry` - Отправка телеметрии
 - `GET /telemetry/device/:deviceId` - Получение телеметрии устройства
 - Автоматическое ограничение записей (настраивается через MAX_TELEMETRY_RECORDS_PER_DEVICE)
+
+#### Event Service
+
+- `POST /events` - Отправка события
+- `GET /events` - Получение списка всех событий
+- `GET /events/:id` - Получение информации о конкретном событии
 
 #### API Gateway (GraphQL с JWT)
 
@@ -212,6 +229,18 @@ MONGO_DB_NAME=iot
 NATS_URL=nats://nats:4222
 MAX_TELEMETRY_RECORDS_PER_DEVICE=100
 CORS_ORIGIN=http://localhost:3000,http://localhost:4000
+```
+
+### Event Service
+
+```env
+PORT=3004
+MONGO_URL=mongodb://mongo:27017
+MONGO_DB_NAME=iot
+NATS_URL=nats://nats:4222
+CORS_ORIGIN=http://localhost:3000,http://localhost:4000
+ENABLE_EVENT_STORAGE=true
+EVENT_RETENTION_DAYS=30
 ```
 
 ## GraphQL API
@@ -345,6 +374,7 @@ node test-graphql.js
 - **Device Service**: http://localhost:3002
 - **Telemetry Service**: http://localhost:3003
 - **Auth Service**: http://localhost:3001
+- **Event Service**: http://localhost:3004
 
 ## Структура API Gateway
 
@@ -369,6 +399,10 @@ backend/api-gateway/
 │   │   ├── telemetry.module.ts
 │   │   ├── telemetry.service.ts
 │   │   └── telemetry.resolver.ts
+│   ├── event/                  # Модуль событий
+│   │   ├── event.module.ts
+│   │   ├── event.service.ts
+│   │   └── event.resolver.ts
 │   ├── nats/                   # Модуль NATS
 │   │   ├── nats.module.ts
 │   │   └── nats.service.ts

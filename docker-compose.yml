@@ -61,6 +61,23 @@ services:
     env_file:
       - ./backend/telemetry-service/env.example
 
+  event-service:
+    build: ./backend/event-service
+    ports:
+      - "3004:3004"
+    depends_on:
+      - mongo
+      - nats
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB_NAME=iot
+      - NATS_URL=nats://nats:4222
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:4000
+      - ENABLE_EVENT_STORAGE=true
+      - EVENT_RETENTION_DAYS=30
+    env_file:
+      - ./backend/event-service/env.example
+
   api-gateway:
     build: ./backend/api-gateway
     ports:
@@ -70,11 +87,13 @@ services:
       - device-service
       - telemetry-service
       - auth-service
+      - event-service
     environment:
       - NATS_URL=nats://nats:4222
       - DEVICE_SERVICE_URL=http://device-service:3002
       - TELEMETRY_SERVICE_URL=http://telemetry-service:3003
       - AUTH_SERVICE_URL=http://auth-service:3001
+      - EVENT_SERVICE_URL=http://event-service:3004
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production
       - CORS_ORIGIN=http://localhost:3000,http://localhost:8080
     env_file:

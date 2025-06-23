@@ -127,18 +127,18 @@ main() {
     if [ $# -eq 1 ]; then
         local service=$1
         case $service in
-            "auth-service"|"device-service"|"telemetry-service"|"api-gateway")
+            "auth-service"|"device-service"|"telemetry-service"|"event-service"|"api-gateway")
                 run_service_tests "$service"
                 ;;
             *)
                 print_error "Неизвестный сервис: $service"
-                print_status "Доступные сервисы: auth-service, device-service, telemetry-service, api-gateway"
+                print_status "Доступные сервисы: auth-service, device-service, telemetry-service, event-service, api-gateway"
                 exit 1
                 ;;
         esac
     else
         # Запуск тестов во всех сервисах
-        local services=("auth-service" "device-service" "telemetry-service" "api-gateway")
+        local services=("auth-service" "device-service" "telemetry-service" "event-service" "api-gateway")
         local failed_services=()
         
         for service in "${services[@]}"; do
@@ -181,6 +181,7 @@ case "${1:-}" in
         echo "  auth-service"
         echo "  device-service"
         echo "  telemetry-service"
+        echo "  event-service"
         echo "  api-gateway"
         echo ""
         echo "Примеры:"
