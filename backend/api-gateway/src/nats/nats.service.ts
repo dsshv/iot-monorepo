@@ -5,7 +5,7 @@ import { TelemetryResolver } from '../telemetry/telemetry.resolver';
 @Injectable()
 export class NatsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(NatsService.name);
-  private telemetryResolver: TelemetryResolver;
+  private telemetryResolver!: TelemetryResolver;
 
   constructor() {}
 
@@ -20,7 +20,8 @@ export class NatsService implements OnModuleInit, OnModuleDestroy {
       await natsManager.connect();
       await this.setupTelemetrySubscription();
     } catch (error) {
-      this.logger.error(`Failed to initialize NATS: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to initialize NATS: ${errorMessage}`);
     }
   }
 
@@ -28,7 +29,8 @@ export class NatsService implements OnModuleInit, OnModuleDestroy {
     try {
       await natsManager.disconnect();
     } catch (error) {
-      this.logger.error(`Failed to disconnect from NATS: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to disconnect from NATS: ${errorMessage}`);
     }
   }
 
@@ -56,7 +58,8 @@ export class NatsService implements OnModuleInit, OnModuleDestroy {
         }
       })();
     } catch (error) {
-      this.logger.error(`Failed to setup telemetry subscription: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to setup telemetry subscription: ${errorMessage}`);
     }
   }
 
@@ -82,7 +85,8 @@ export class NatsService implements OnModuleInit, OnModuleDestroy {
 
       return subscriptionId;
     } catch (error) {
-      this.logger.error(`Failed to subscribe to telemetry: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to subscribe to telemetry: ${errorMessage}`);
       throw error;
     }
   }
@@ -95,13 +99,5 @@ export class NatsService implements OnModuleInit, OnModuleDestroy {
 
   getConnection() {
     return natsManager.getConnection();
-  }
-
-  getStringCodec() {
-    return natsManager.getStringCodec();
-  }
-
-  isConnected(): boolean {
-    return natsManager.isConnected();
   }
 } 

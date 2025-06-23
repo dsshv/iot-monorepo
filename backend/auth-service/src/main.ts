@@ -27,7 +27,6 @@ class AppModule {}
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Настройка CORS
   const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:4000'];
   app.enableCors({
     origin: corsOrigins,
@@ -38,7 +37,6 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Auth service running on port ${port}`);
 
-  // Graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully');
     await app.close();

@@ -1,0 +1,32 @@
+{
+  "name": "iot-platform-backend",
+  "version": "1.0.0",
+  "description": "IoT Platform Backend Services",
+  "scripts": {
+    "install:all": "npm install && cd auth-service && npm install && cd ../device-service && npm install && cd ../telemetry-service && npm install && cd ../event-service && npm install && cd ../command-service && npm install && cd ../api-gateway && npm install",
+    "build:all": "cd auth-service && npm run build && cd ../device-service && npm run build && cd ../telemetry-service && npm run build && cd ../event-service && npm run build && cd ../command-service && npm run build && cd ../api-gateway && npm run build",
+    "test:all": "./run-tests.sh",
+    "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name 'dist' -type d -prune -exec rm -rf '{}' +",
+    "clean:install": "npm run clean && npm run install:all"
+  },
+  "dependencies": {
+    "nats": "^2.16.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.7.0",
+    "@types/node": "^18.0.0"
+  },
+  "workspaces": [
+    "auth-service",
+    "device-service", 
+    "telemetry-service",
+    "event-service",
+    "command-service",
+    "api-gateway"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+} 

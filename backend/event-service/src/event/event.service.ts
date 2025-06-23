@@ -26,7 +26,6 @@ export class EventService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    // Cleanup if needed
   }
 
   private async setupEventSubscriptions() {
@@ -37,14 +36,12 @@ export class EventService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      // Подписка на события устройств
       const deviceCreatedSub = connection.subscribe('device.created');
       const deviceUpdatedSub = connection.subscribe('device.updated');
       const telemetryReceivedSub = connection.subscribe('telemetry.received');
 
       this.logger.log('Subscribed to event channels: device.created, device.updated, telemetry.received');
 
-      // Обработка событий создания устройства
       (async () => {
         for await (const msg of deviceCreatedSub) {
           const eventData = JSON.parse(msg.data.toString());
@@ -52,7 +49,6 @@ export class EventService implements OnModuleInit, OnModuleDestroy {
         }
       })();
 
-      // Обработка событий обновления устройства
       (async () => {
         for await (const msg of deviceUpdatedSub) {
           const eventData = JSON.parse(msg.data.toString());
@@ -60,7 +56,6 @@ export class EventService implements OnModuleInit, OnModuleDestroy {
         }
       })();
 
-      // Обработка событий телеметрии
       (async () => {
         for await (const msg of telemetryReceivedSub) {
           const eventData = JSON.parse(msg.data.toString());
@@ -120,18 +115,15 @@ export class EventService implements OnModuleInit, OnModuleDestroy {
 
   private async processEvent(eventData: EventData) {
     try {
-      // Логирование события
       this.logger.log(`Processing event: ${eventData.eventType} from ${eventData.source}`, {
         deviceId: eventData.deviceId,
         payload: eventData.payload,
       });
 
-      // Сохранение в базу данных (если включено)
       if (this.enableStorage) {
         await this.saveEvent(eventData);
       }
 
-      // Здесь можно добавить дополнительную бизнес-логику
       await this.executeBusinessLogic(eventData);
 
     } catch (error) {
@@ -158,13 +150,6 @@ export class EventService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async executeBusinessLogic(eventData: EventData) {
-    // Здесь можно добавить бизнес-логику обработки событий
-    // Например:
-    // - Отправка уведомлений
-    // - Обновление агрегированных данных
-    // - Триггеры для других сервисов
-    // - Аналитика и метрики
-
     switch (eventData.eventType) {
       case 'device.created':
         this.logger.log(`New device created: ${eventData.deviceId}`);
@@ -180,7 +165,6 @@ export class EventService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // Методы для получения событий из базы данных
   async getEventsByType(eventType: string, limit: number = 100): Promise<Event[]> {
     return this.em.find(Event, { eventType }, { 
       orderBy: { timestamp: 'DESC' }, 

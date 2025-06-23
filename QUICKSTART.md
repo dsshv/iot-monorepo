@@ -6,7 +6,7 @@
 # Настройка переменных окружения
 ./setup-env.sh
 
-# Установка зависимостей
+# Установка зависимостей (новый подход с общим package.json)
 ./install-dependencies.sh
 ```
 
@@ -21,19 +21,15 @@ docker-compose up --build
 ### Вариант B: Локальный запуск
 
 ```bash
-# Терминал 1: API Gateway
-cd backend/api-gateway && npm run build && npm start
+# Сборка всех сервисов
+cd backend && npm run build:all
 
-# Терминал 2: Device Service
-cd backend/device-service && npm run build && npm start
-
-# Терминал 3: Telemetry Service
-cd backend/telemetry-service && npm run build && npm start
-
-# Терминал 4: Event Service
-cd backend/event-service && npm run build && npm start
-
-# Терминал 5: Frontend
+# Запуск сервисов в отдельных терминалах
+cd backend/api-gateway && npm start
+cd backend/device-service && npm start
+cd backend/telemetry-service && npm start
+cd backend/event-service && npm start
+cd backend/command-service && npm start
 cd frontend && npm run dev
 ```
 
@@ -42,15 +38,29 @@ cd frontend && npm run dev
 - **Frontend**: http://localhost:3000
 - **GraphQL Playground**: http://localhost:4000/graphql
 - **Event Service**: http://localhost:3004
+- **Command Service**: http://localhost:3005
 
-## 4. Тестирование
+## 4. Управление зависимостями
+
+```bash
+# Установка всех зависимостей
+cd backend && npm run install:all
+
+# Сборка всех сервисов
+cd backend && npm run build:all
+
+# Очистка и переустановка
+cd backend && npm run clean:install
+```
+
+## 5. Тестирование
 
 ```bash
 # Создание тестовых данных и тестирование всех эндпойнтов
 node test-api.js
 ```
 
-## 5. Структура приложения
+## 6. Структура приложения
 
 - `/devices` - Список всех устройств
 - `/devices/:id` - Детальная информация об устройстве с телеметрией

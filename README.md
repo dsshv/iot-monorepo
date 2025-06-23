@@ -13,6 +13,7 @@
 - **device-service** (порт 3002) - Управление устройствами
 - **telemetry-service** (порт 3003) - Обработка телеметрии
 - **event-service** (порт 3004) - Централизованная обработка событий
+- **command-service** (порт 3005) - Централизованная отправка команд на устройства
 
 ### Frontend
 
@@ -33,38 +34,47 @@
 - ✅ Сохранение событий в MongoDB через MikroORM
 - ✅ Расширяемая архитектура для бизнес-логики событий
 
-### 2. Оптимизация NATS
+### 2. Command Service
+
+- ✅ Централизованная отправка команд на устройства через NATS
+- ✅ REST API POST /command для отправки команд
+- ✅ Публикация команд в канал device.command
+- ✅ Валидация параметров deviceId и command
+- ✅ Логирование отправки команд
+
+### 3. Оптимизация NATS
 
 - ✅ Singleton pattern для подключения к NATS
 - ✅ Автоматическое переподключение и graceful shutdown
 - ✅ Единый экземпляр подключения во всех сервисах
 
-### 3. Поддержка .env файлов
+### 4. Поддержка .env файлов
 
 - ✅ Конфигурация через переменные окружения
 - ✅ Отдельные .env файлы для каждого сервиса
 - ✅ Передача переменных через Docker Compose
 
-### 4. Расширенные API эндпойнты
+### 5. Расширенные API эндпойнты
 
 - ✅ PUT /devices/:id - обновление статуса устройства
 - ✅ GET /telemetry/device/:deviceId - получение телеметрии устройства
+- ✅ POST /command - отправка команд на устройства
 - ✅ Настраиваемое количество записей телеметрии
 
-### 5. Модульный API Gateway
+### 6. Модульный API Gateway
 
 - ✅ Полноценная модульная архитектура NestJS
 - ✅ JWT аутентификация для всех GraphQL запросов и подписок
 - ✅ Фильтрация подписок по deviceId
 - ✅ Автоматическая генерация GraphQL схем
 
-### 6. Безопасность
+### 7. Безопасность
 
 - ✅ JWT guard для защиты всех эндпойнтов
 - ✅ Декоратор для получения текущего пользователя
 - ✅ Валидация токенов в заголовке Authorization
 
-### 7. Тестирование
+### 8. Тестирование
 
 - ✅ Jest тесты для всех микросервисов
 - ✅ Unit тесты для контроллеров, сервисов и резолверов
@@ -80,8 +90,12 @@
 # Копирование примеров .env файлов
 ./setup-env.sh
 
-# Установка зависимостей
+# Установка зависимостей (новый подход с общим package.json)
 ./install-dependencies.sh
+
+# Альтернативно, можно установить зависимости вручную:
+cd backend && npm run install:all
+cd frontend && npm install
 ```
 
 ### 2. Запуск через Docker Compose
@@ -93,12 +107,32 @@ docker-compose up --build
 ### 3. Альтернативный запуск (без Docker)
 
 ```bash
+# Сборка всех сервисов
+cd backend && npm run build:all
+
 # Запуск сервисов в отдельных терминалах
-cd backend/api-gateway && npm run build && npm start
-cd backend/device-service && npm run build && npm start
-cd backend/telemetry-service && npm run build && npm start
-cd backend/event-service && npm run build && npm start
+cd backend/api-gateway && npm start
+cd backend/device-service && npm start
+cd backend/telemetry-service && npm start
+cd backend/event-service && npm start
+cd backend/command-service && npm start
 cd frontend && npm run dev
+```
+
+### 4. Управление зависимостями
+
+```bash
+# Установка всех зависимостей
+cd backend && npm run install:all
+
+# Сборка всех сервисов
+cd backend && npm run build:all
+
+# Очистка node_modules и dist
+cd backend && npm run clean
+
+# Полная переустановка
+cd backend && npm run clean:install
 ```
 
 ## Тестирование
@@ -114,6 +148,7 @@ cd backend && ./run-tests.sh auth-service
 cd backend && ./run-tests.sh device-service
 cd backend && ./run-tests.sh telemetry-service
 cd backend && ./run-tests.sh event-service
+cd backend && ./run-tests.sh command-service
 cd backend && ./run-tests.sh api-gateway
 
 # Запуск тестов с покрытием
@@ -165,6 +200,12 @@ cd backend && ./run-tests.sh help
 - `GET /events` - Получение списка всех событий
 - `GET /events/:id` - Получение информации о конкретном событии
 
+#### Command Service
+
+- `POST /command` - Отправка команды на устройство
+- Валидация параметров deviceId и command
+- Публикация в NATS канал device.command
+
 #### API Gateway (GraphQL с JWT)
 
 - GraphQL endpoint на `/graphql`
@@ -207,6 +248,8 @@ JWT_SECRET=your-super-secret-jwt-key
 DEVICE_SERVICE_URL=http://device-service:3002
 TELEMETRY_SERVICE_URL=http://telemetry-service:3003
 AUTH_SERVICE_URL=http://auth-service:3001
+EVENT_SERVICE_URL=http://event-service:3004
+COMMAND_SERVICE_URL=http://command-service:3005
 CORS_ORIGIN=http://localhost:3000,http://localhost:8080
 ```
 
@@ -241,6 +284,14 @@ NATS_URL=nats://nats:4222
 CORS_ORIGIN=http://localhost:3000,http://localhost:4000
 ENABLE_EVENT_STORAGE=true
 EVENT_RETENTION_DAYS=30
+```
+
+### Command Service
+
+```env
+PORT=3005
+NATS_URL=nats://nats:4222
+CORS_ORIGIN=http://localhost:3000,http://localhost:4000
 ```
 
 ## GraphQL API
@@ -350,6 +401,19 @@ Content-Type: application/json
 GET http://localhost:3003/telemetry/device/:deviceId
 ```
 
+### Команды
+
+```bash
+# Отправить команду на устройство
+POST http://localhost:3005/command
+Content-Type: application/json
+
+{
+  "deviceId": "device_id",
+  "command": "restart"
+}
+```
+
 ## Тестирование
 
 ### Тестирование API
@@ -375,6 +439,7 @@ node test-graphql.js
 - **Telemetry Service**: http://localhost:3003
 - **Auth Service**: http://localhost:3001
 - **Event Service**: http://localhost:3004
+- **Command Service**: http://localhost:3005
 
 ## Структура API Gateway
 

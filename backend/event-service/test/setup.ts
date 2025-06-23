@@ -7,7 +7,6 @@ jest.mock('../../../shared/nats', () => ({
     getConnection: jest.fn(() => ({
       subscribe: jest.fn(() => ({
         [Symbol.asyncIterator]: async function* () {
-          // Mock async iterator
         },
       })),
     })),

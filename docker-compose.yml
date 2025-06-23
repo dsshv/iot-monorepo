@@ -78,6 +78,18 @@ services:
     env_file:
       - ./backend/event-service/env.example
 
+  command-service:
+    build: ./backend/command-service
+    ports:
+      - "3005:3005"
+    depends_on:
+      - nats
+    environment:
+      - NATS_URL=nats://nats:4222
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:4000
+    env_file:
+      - ./backend/command-service/env.example
+
   api-gateway:
     build: ./backend/api-gateway
     ports:
@@ -88,12 +100,14 @@ services:
       - telemetry-service
       - auth-service
       - event-service
+      - command-service
     environment:
       - NATS_URL=nats://nats:4222
       - DEVICE_SERVICE_URL=http://device-service:3002
       - TELEMETRY_SERVICE_URL=http://telemetry-service:3003
       - AUTH_SERVICE_URL=http://auth-service:3001
       - EVENT_SERVICE_URL=http://event-service:3004
+      - COMMAND_SERVICE_URL=http://command-service:3005
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production
       - CORS_ORIGIN=http://localhost:3000,http://localhost:8080
     env_file:

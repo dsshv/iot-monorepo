@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TelemetryController } from './telemetry/telemetry.controller';
 import { TelemetryRecord } from './entities/telemetry.entity';
-import { natsManager, disconnectNats } from '../../shared/nats';
+import { natsManager, disconnectNats } from '../shared/nats';
 
 @Module({
   imports: [
@@ -21,12 +21,10 @@ import { natsManager, disconnectNats } from '../../shared/nats';
 class AppModule {}
 
 async function bootstrap() {
-  // Инициализация NATS
   await natsManager.connect();
   
   const app = await NestFactory.create(AppModule);
   
-  // Настройка CORS
   const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:4000'];
   app.enableCors({
     origin: corsOrigins,
@@ -37,7 +35,6 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Telemetry service running on port ${port}`);
 
-  // Graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully');
     await disconnectNats();

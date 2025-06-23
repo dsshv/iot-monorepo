@@ -21,12 +21,10 @@ import { natsManager, disconnectNats } from '../../shared/nats';
 class AppModule {}
 
 async function bootstrap() {
-  // Инициализация NATS
   await natsManager.connect();
   
   const app = await NestFactory.create(AppModule);
   
-  // Настройка CORS
   const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:4000'];
   app.enableCors({
     origin: corsOrigins,
@@ -37,7 +35,6 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Device service running on port ${port}`);
 
-  // Graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully');
     await disconnectNats();
